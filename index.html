@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Copy & Cycle Text</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --card: #111827;
+        --muted: #94a3b8;
+        --ring: #22d3ee;
+        --text: #e5e7eb;
+        --accent: #22c55e;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Inter, 'Noto Sans', sans-serif;
+        background: linear-gradient(120deg, #0b1025, #0f172a 40%, #0b1025);
+        color: var(--text);
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+      }
+      .wrap {
+        width: min(980px, 92vw);
+      }
+      .card {
+        background: rgba(17, 24, 39, 0.75);
+        backdrop-filter: saturate(120%) blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        padding: 22px;
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .title {
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+        margin: 4px 0 14px;
+      }
+      .subtitle {
+        color: var(--muted);
+        font-size: 14px;
+        margin: -6px 0 18px;
+      }
+      .display {
+        position: relative;
+        background: #0b1222;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 18px;
+        min-height: 120px;
+      }
+      .text {
+        font-size: 18px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .btn {
+        appearance: none;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: #0e1a32;
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 700;
+        transition: 0.18s transform, 0.18s box-shadow, 0.18s background;
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+      }
+      .btn:active {
+        transform: translateY(0);
+      }
+      .btn.primary {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        border-color: transparent;
+        color: #04140a;
+      }
+      .btn.ghost {
+        background: transparent;
+      }
+      .badge {
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        color: var(--muted);
+      }
+      .controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+      }
+      .switch input {
+        display: none;
+      }
+      .toggle {
+        width: 40px;
+        height: 22px;
+        background: #0b1222;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        position: relative;
+        transition: 0.2s;
+      }
+      .toggle::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #ffffff20;
+        transition: 0.2s;
+      }
+      .switch input:checked + .toggle {
+        background: #14532d;
+        border-color: #15803d;
+      }
+      .switch input:checked + .toggle::after {
+        left: 20px;
+        background: #22c55e;
+      }
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .toast {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        background: #071425;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: var(--text);
+        padding: 12px 14px;
+        border-radius: 12px;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+        opacity: 0;
+        transform: translateY(12px);
+        transition: 0.25s;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      textarea.import {
+        width: 100%;
+        min-height: 120px;
+        border-radius: 12px;
+        background: #0b1222;
+        border: 1px dashed rgba(255, 255, 255, 0.15);
+        color: var(--text);
+        padding: 10px;
+      }
+      details {
+        margin-top: 14px;
+      }
+      details > summary {
+        cursor: pointer;
+        color: var(--muted);
+      }
+      code.snip {
+        background: #0b1222;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 4px 8px;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <div class="row" style="justify-content: space-between; align-items: flex-start">
+          <div>
+            <div class="title">Copy & Cycle Text</div>
+            <div class="subtitle">Setiap kali <b>disalin</b>, teks akan otomatis berganti ke item berikutnya. Cocok untuk kuota caption, kode voucher, kuis, dsb.</div>
+          </div>
+          <div class="badge" id="counter">0/0</div>
+        </div>
+
+        <div class="display" id="display">
+          <div class="text" id="currentText"></div>
+        </div>
+
+        <div class="row" style="margin-top: 14px">
+          <button class="btn primary" id="copyBtn">Copy</button>
+          <button class="btn" id="nextBtn">Ganti ke Berikutnya</button>
+          <button class="btn ghost" id="resetBtn">Reset</button>
+          <div class="controls">
+            <label class="switch"><input type="checkbox" id="shuffle" /><span class="toggle"></span></label>
+            <span class="subtitle">Acak urutan</span>
+          </div>
+        </div>
+
+        <details>
+          <summary>Masukkan/ubah daftar teks (opsional)</summary>
+          <p class="subtitle">Tempel daftar teks <em>satu baris per item</em> lalu tekan <b>Muat</b>.</p>
+          <textarea class="import" id="importArea" placeholder="Item 1\nItem 2\nItem 3"></textarea>
+          <div class="row" style="margin-top: 8px"><button class="btn" id="loadBtn">Muat</button></div>
+          <p class="subtitle">Atau edit langsung di kode: cari variabel <code class="snip">texts</code>.</p>
+        </details>
+
+        <div class="footer">
+          <span>Tip: Anda bisa tekan <b>Ctrl/Cmd+C</b> langsung pada kotak teks — tetap akan menyalin item aktif dan berganti otomatis.</span>
+          <span id="status"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast">✅ Disalin ke clipboard</div>
+
+    <script>
+      // === 1) DAFTAR TEKS SUMBER ===
+      // Ganti contoh di bawah dengan bahan teks Anda. Bisa panjang/pendek, multiline OK.
+      let texts = [
+        'di Lazada Pesta Gajian aku mau checkout Laptop 1',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 2',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 3',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 4',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 5',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 6',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 7',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 8',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 9',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 10',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 11',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 12',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 13',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 14',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 15',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 16',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 17',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 18',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 19',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 20',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 21',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 22',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 23',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 24',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 25',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 26',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 27',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 28',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 29',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 30',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 31',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 32',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 33',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 34',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 35',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 36',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 37',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 38',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 39',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 40',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 41',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 42',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 43',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 44',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 45',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 46',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 47',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 48',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 49',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 50',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 51',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 52',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 53',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 54',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 55',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 56',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 57',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 58',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 59',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 60',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 61',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 62',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 63',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 64',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 65',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 66',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 67',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 68',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 69',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 70',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 71',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 72',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 73',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 74',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 75',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 76',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 77',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 78',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 79',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 80',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 81',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 82',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 83',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 84',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 85',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 86',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 87',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 88',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 89',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 90',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 91',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 92',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 93',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 94',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 95',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 96',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 97',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 98',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 99',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 100',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 101',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 102',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 103',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 104',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 105',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 106',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 107',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 108',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 109',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 110',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 111',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 112',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 113',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 114',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 115',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 116',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 117',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 118',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 119',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 120',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 121',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 122',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 123',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 124',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 125',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 126',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 127',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 128',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 129',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 130',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 131',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 132',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 133',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 134',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 135',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 136',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 137',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 138',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 139',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 140',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 141',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 142',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 143',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 144',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 145',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 146',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 147',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 148',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 149',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 150',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 151',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 152',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 153',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 154',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 155',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 156',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 157',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 158',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 159',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 160',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 161',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 162',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 163',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 164',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 165',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 166',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 167',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 168',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 169',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 170',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 171',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 172',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 173',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 174',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 175',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 176',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 177',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 178',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 179',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 180',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 181',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 182',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 183',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 184',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 185',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 186',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 187',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 188',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 189',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 190',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 191',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 192',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 193',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 194',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 195',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 196',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 197',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 198',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 199',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 200',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 201',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 202',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 203',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 204',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 205',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 206',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 207',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 208',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 209',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 210',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 211',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 212',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 213',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 214',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 215',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 216',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 217',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 218',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 219',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 220',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 221',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 222',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 223',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 224',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 225',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 226',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 227',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 228',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 229',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 230',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 231',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 232',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 233',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 234',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 235',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 236',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 237',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 238',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 239',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 240',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 241',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 242',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 243',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 244',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 245',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 246',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 247',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 248',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 249',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 250',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 251',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 252',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 253',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 254',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 255',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 256',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 257',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 258',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 259',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 260',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 261',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 262',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 263',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 264',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 265',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 266',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 267',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 268',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 269',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 270',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 271',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 272',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 273',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 274',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 275',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 276',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 277',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 278',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 279',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 280',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 281',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 282',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 283',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 284',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 285',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 286',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 287',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 288',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 289',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 290',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 291',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 292',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 293',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 294',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 295',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 296',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 297',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 298',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 299',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 300',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 301',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 302',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 303',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 304',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 305',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 306',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 307',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 308',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 309',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 310',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 311',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 312',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 313',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 314',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 315',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 316',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 317',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 318',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 319',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 320',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 321',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 322',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 323',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 324',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 325',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 326',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 327',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 328',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 329',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 330',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 331',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 332',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 333',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 334',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 335',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 336',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 337',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 338',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 339',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 340',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 341',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 342',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 343',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 344',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 345',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 346',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 347',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 348',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 349',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 350',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 351',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 352',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 353',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 354',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 355',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 356',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 357',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 358',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 359',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 360',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 361',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 362',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 363',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 364',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 365',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 366',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 367',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 368',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 369',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 370',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 371',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 372',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 373',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 374',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 375',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 376',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 377',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 378',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 379',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 380',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 381',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 382',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 383',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 384',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 385',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 386',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 387',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 388',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 389',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 390',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 391',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 392',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 393',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 394',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 395',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 396',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 397',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 398',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 399',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 400',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 401',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 402',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 403',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 404',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 405',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 406',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 407',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 408',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 409',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 410',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 411',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 412',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 413',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 414',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 415',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 416',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 417',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 418',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 419',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 420',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 421',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 422',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 423',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 424',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 425',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 426',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 427',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 428',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 429',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 430',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 431',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 432',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 433',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 434',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 435',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 436',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 437',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 438',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 439',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 440',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 441',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 442',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 443',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 444',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 445',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 446',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 447',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 448',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 449',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 450',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 451',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 452',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 453',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 454',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 455',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 456',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 457',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 458',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 459',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 460',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 461',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 462',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 463',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 464',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 465',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 466',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 467',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 468',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 469',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 470',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 471',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 472',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 473',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 474',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 475',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 476',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 477',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 478',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 479',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 480',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 481',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 482',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 483',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 484',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 485',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 486',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 487',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 488',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 489',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 490',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 491',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 492',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 493',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 494',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 495',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 496',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 497',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 498',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 499',
+        'di Lazada Pesta Gajian aku mau checkout Laptop 500',
+      ];
+
+      // === 2) STATE ===
+      let idx = 0;
+      let order = [...texts.keys()];
+
+      // === 3) UTIL ===
+      const el = (id) => document.getElementById(id);
+      const current = () => texts[order[idx]] ?? '';
+      const updateCounter = () => (el('counter').textContent = `${idx + 1}/${texts.length}`);
+      const setText = () => {
+        el('currentText').textContent = current();
+        updateCounter();
+      };
+
+      function toast(msg) {
+        const t = el('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 1200);
+      }
+
+      function shuffleArray(a) {
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      }
+
+      function rebuildOrder() {
+        order = [...texts.keys()];
+        if (el('shuffle').checked) shuffleArray(order);
+        idx = 0;
+        setText();
+      }
+
+      async function copyNow() {
+        const content = current();
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(content);
+          } else {
+            // fallback untuk konteks non-https
+            const ta = document.createElement('textarea');
+            ta.value = content;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+          }
+          toast('✅ Disalin ke clipboard');
+          next();
+        } catch (e) {
+          toast('⚠️ Gagal menyalin');
+          console.error(e);
+        }
+      }
+
+      function next() {
+        idx = (idx + 1) % texts.length;
+        setText();
+      }
+      function reset() {
+        idx = 0;
+        setText();
+      }
+
+      // Intersep event copy jika user menekan Ctrl/Cmd+C di dalam kotak
+      el('display').addEventListener('copy', (ev) => {
+        ev.preventDefault();
+        if (ev.clipboardData) {
+          ev.clipboardData.setData('text/plain', current());
+        }
+        toast('✅ Disalin ke clipboard');
+        next();
+      });
+
+      // Tombol & kontrol
+      el('copyBtn').addEventListener('click', copyNow);
+      el('nextBtn').addEventListener('click', next);
+      el('resetBtn').addEventListener('click', reset);
+      el('shuffle').addEventListener('change', rebuildOrder);
+
+      el('loadBtn').addEventListener('click', () => {
+        const raw = el('importArea').value.trim();
+        if (!raw) {
+          return;
+        }
+        const arr = raw
+          .split(/\r?\n/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (arr.length) {
+          texts = arr;
+          rebuildOrder();
+          toast('📥 Daftar teks dimuat');
+        }
+      });
+
+      // Init
+      rebuildOrder();
+    </script>
+  </body>
+</html>
